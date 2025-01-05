@@ -8,6 +8,9 @@ from time import sleep
 
 root = tkinter.Tk()
 
+root.geometry('375x500')
+root.resizable(False, False)
+
 addcifs_header_label = ttk.Label(root, text="Add Cifs GUI")
 addcifs_header_label.pack()
 
@@ -19,21 +22,21 @@ ip_entry = ttk.Entry(root, textvariable=ip_var)
 ip_entry.place(relx = 0.5, rely = 0.1, anchor = tkinter.CENTER)
 
 cifs_share_label = ttk.Label(root, text="Cifs Share:")
-cifs_share_label.place(relx = 0.1, rely = 0.18, anchor = tkinter.CENTER)
+cifs_share_label.place(relx = 0.13, rely = 0.18, anchor = tkinter.CENTER)
 cifs_share_var = StringVar()
 cifs_share_var.set("default_text")
 cifs_share_entry = ttk.Entry(root, textvariable=cifs_share_var)
 cifs_share_entry.place(relx = 0.5, rely = 0.18, anchor = tkinter.CENTER)
 
 local_path_label = ttk.Label(root, text="Local Path:")
-local_path_label.place(relx = 0.1, rely = 0.26, anchor = tkinter.CENTER)
+local_path_label.place(relx = 0.13, rely = 0.26, anchor = tkinter.CENTER)
 local_path_var = StringVar()
 local_path_var.set("default_text")
 local_path_entry = ttk.Entry(root, textvariable=local_path_var)
 local_path_entry.place(relx = 0.5, rely = 0.26, anchor = tkinter.CENTER)
 
 cifs_creds_label = ttk.Label(root, text="Cifs Creds:")
-cifs_creds_label.place(relx = 0.1, rely = 0.34, anchor = tkinter.CENTER)
+cifs_creds_label.place(relx = 0.13, rely = 0.34, anchor = tkinter.CENTER)
 cifs_creds_var = StringVar()
 cifs_creds_var.set("default_text")
 cifs_creds_entry = ttk.Entry(root, textvariable=local_path_var)
@@ -45,7 +48,17 @@ create_path_checkbox.place(relx = 0.05, rely = 0.42, anchor = tkinter.W)
 
 add_to_fstab_state = IntVar()
 add_to_fstab_checkbox = ttk.Checkbutton(root, text = "Add to FSTAB", variable=add_to_fstab_state)
-add_to_fstab_checkbox.place(relx = 0.05, rely = 0.52, anchor = tkinter.W)
+add_to_fstab_checkbox.place(relx = 0.05, rely = 0.50, anchor = tkinter.W)
+
+restart_systemd_daemon_state = IntVar()
+restart_systemd_daemon_checkbox = ttk.Checkbutton(root, text = "Restart Systmed Daemon", variable=add_to_fstab_state)
+restart_systemd_daemon_checkbox.place(relx = 0.05, rely = 0.58, anchor = tkinter.W)
+
+mount_all_state = IntVar()
+mount_all_checkbox = ttk.Checkbutton(root, text = "Mount All", variable=add_to_fstab_state)
+mount_all_checkbox.place(relx = 0.05, rely = 0.66, anchor = tkinter.W)
+
+root.attributes('-type', 'dialog')
 
 sv_ttk.set_theme("dark")
 
