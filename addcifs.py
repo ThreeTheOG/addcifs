@@ -7,6 +7,7 @@ import tkinter
 from tkinter import ttk, StringVar, IntVar
 from tktooltip import ToolTip
 import os
+import json
 # from os import geteuid
 
 # uid = geteuid()
@@ -14,7 +15,8 @@ import os
 #     print('UID not 0, please run as root or with sudo.')
 #     exit()
 
-
+defaults_file_name = '.addcifs_defaults.json'
+defaults_file_path = __file__[:-12] + defaults_file_name
 
 root = tkinter.Tk()
 
@@ -40,7 +42,37 @@ def check_empty(inputs: list): # returns True if empty
             return True
 
 
-def save_defaults(): pass
+def save_defaults():
+    defaults_dict = {
+        'ip': ip_var.get(),
+        'cifs_credentials_file': cifs_creds_var.get(),
+        'create_path_state': create_path_state.get(),
+        'restart_daemon_state': restart_systemd_daemon_state.get(),
+        'mount_all_state': mount_all_state.get()
+    }
+
+    f = open(defaults_file_path, 'w')
+    f.write(json.dumps(defaults_dict, indent = 4))
+
+def load_defaults():
+    if os.path.exists(defaults_file_path):
+        f = open(defaults_file_path, 'r')
+        if f.read() != '':
+            try:
+                f.seek(0)
+                json_dict = json.load(f)
+            except json.JSONDecodeError as e:
+                print(defaults_file_path)
+                print(f'Invalid json data in {defaults_file_path}. Delete the file, or fix the error to resume. (Original Error: {e})')
+                return
+
+        ip_var.set(json_dict['ip'])
+        cifs_creds_var.set(json_dict['cifs_credentials_file'])
+        create_path_state.set(json_dict['create_path_state'])
+        restart_systemd_daemon_state.set(json_dict['restart_daemon_state'])
+        mount_all_state.set(json_dict['mount_all_state'])
+load_defaults()
+
 def write():
     if create_path_state.get() == 1:
         if not os.path.isdir(local_path_var.get()):
@@ -80,8 +112,8 @@ ToolTip(local_path_entry, msg = "The local path of the share (Ex: /mnt/my_share)
 
 cifs_creds_label = ttk.Label(root, text="Cifs Creds:")
 cifs_creds_label.place(relx = 0.13, rely = 0.34, anchor = tkinter.CENTER)
-cifs_creds_var.set("default_text")
-cifs_creds_entry = ttk.Entry(root, textvariable=local_path_var)
+# cifs_creds_var.set("default_text")
+cifs_creds_entry = ttk.Entry(root, textvariable=cifs_creds_var)
 cifs_creds_entry.place(relx = 0.5, rely = 0.34, anchor = tkinter.CENTER)
 ToolTip(cifs_creds_entry, msg = "The path of your SMB Credentials file. (Ex: /home/user/.smbcredentials)")
 
@@ -101,7 +133,7 @@ mount_all_checkbox.place(relx = 0.03, rely = 0.58, anchor = tkinter.W)
 # Buttons
 save_defaults_button = ttk.Button(root, text = "Save Defaults", command = save_defaults)
 save_defaults_button.place(relx = 0.5, rely = 0.82, anchor = tkinter.CENTER)
-ToolTip(save_defaults_button, msg = "Save defaults to file excluding cifs share/local path. (./.addcifs_defaults.json)")
+ToolTip(save_defaults_button, msg = f"Save defaults to file excluding cifs share/local path. ({defaults_file_path})")
 
 write_button = ttk.Button(root, text = "Write", command = write)
 write_button.place(relx = 0.5, rely = 0.90, anchor = tkinter.CENTER)
