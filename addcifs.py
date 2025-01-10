@@ -77,7 +77,6 @@ def load_defaults():
             mount_all_state.set(json_dict['mount_all_state'])
 load_defaults()
 
-
 def gen_base_smb_creds_file():
     global creds_window
     creds_window = tkinter.Toplevel(root)
@@ -113,6 +112,9 @@ def save_creds():
             f.write(f"username={username_var.get()}\n")
             f.write(f"password={password_var.get()}\n")
             f.write(f"domain={domain_var.get()}\n")
+            creds_window.destroy()
+    else:
+        print(f'Path {creds_path} already exists. Please remove it or change the path.')
         creds_window.destroy()
 
 
