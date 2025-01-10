@@ -34,6 +34,11 @@ cifs_creds_var = StringVar() # input
 create_path_state = IntVar() # checkbox
 restart_systemd_daemon_state = IntVar() # checkbox
 mount_all_state = IntVar() # checkbox
+# gensmb
+username_var = StringVar()
+password_var = StringVar()
+domain_var = StringVar()
+domain_var.set("WORKGROUP")
 
 inputs = [ip_var, cifs_share_var, local_path_var]
 def check_empty(inputs: list): # returns True if empty
@@ -56,24 +61,65 @@ def save_defaults():
 
 def load_defaults():
     if os.path.exists(defaults_file_path):
-        f = open(defaults_file_path, 'r')
-        if f.read() != '':
-            try:
-                f.seek(0)
-                json_dict = json.load(f)
-            except json.JSONDecodeError as e:
-                print(defaults_file_path)
-                print(f'Invalid json data in {defaults_file_path}. Delete the file, or fix the error to resume. (Original Error: {e})')
-                return
+        with open(defaults_file_path, 'r') as f:
+            if os.path.getsize(defaults_file_path) > 0:
+                    try:
+                        f.seek(0)
+                        json_dict = json.load(f)
+                    except json.JSONDecodeError as e:
+                        print(f'Invalid json data in {defaults_file_path}. Delete the file, or fix the error to resume. (Original Error: {e})')
+                        return
 
-        ip_var.set(json_dict['ip'])
-        cifs_creds_var.set(json_dict['cifs_credentials_file'])
-        create_path_state.set(json_dict['create_path_state'])
-        restart_systemd_daemon_state.set(json_dict['restart_daemon_state'])
-        mount_all_state.set(json_dict['mount_all_state'])
+            ip_var.set(json_dict['ip'])
+            cifs_creds_var.set(json_dict['cifs_credentials_file'])
+            create_path_state.set(json_dict['create_path_state'])
+            restart_systemd_daemon_state.set(json_dict['restart_daemon_state'])
+            mount_all_state.set(json_dict['mount_all_state'])
 load_defaults()
 
+
+def gen_base_smb_creds_file():
+    global creds_window
+    creds_window = tkinter.Toplevel(root)
+    creds_window.geometry('200x320')
+    creds_window.attributes('-type', 'dialog')
+
+    username_label = ttk.Label(creds_window, text="Username:")
+    username_label.place(relx = 0.5, rely = 0.2, anchor = tkinter.CENTER)
+    username_entry = ttk.Entry(creds_window, textvariable=username_var)
+    username_entry.place(relx = 0.5, rely = 0.29, anchor = tkinter.CENTER)
+
+    password_label = ttk.Label(creds_window, text="Password:")
+    password_label.place(relx = 0.5, rely = 0.38, anchor = tkinter.CENTER)
+    password_entry = ttk.Entry(creds_window, textvariable=password_var, show='*')
+    password_entry.place(relx = 0.5, rely = 0.47, anchor = tkinter.CENTER)
+
+    domain_label = ttk.Label(creds_window, text="Domain:")
+    domain_label.place(relx = 0.5, rely = 0.56, anchor = tkinter.CENTER)
+    domain_entry = ttk.Entry(creds_window, textvariable=domain_var)
+    domain_entry.place(relx = 0.5, rely = 0.65, anchor = tkinter.CENTER)
+
+    save_button = ttk.Button(creds_window, text="Save", command=save_creds)
+    save_button.place(relx = 0.5, rely = 0.88, anchor = tkinter.CENTER)
+
+    creds_window.transient(root)
+    creds_window.grab_set()
+    root.wait_window(creds_window)
+
+def save_creds():
+    creds_path = cifs_creds_var.get()
+    if not os.path.exists(creds_path):
+        with open(creds_path, 'w') as f:
+            f.write(f"username={username_var.get()}\n")
+            f.write(f"password={password_var.get()}\n")
+            f.write(f"domain={domain_var.get()}\n")
+        creds_window.destroy()
+
+
 def write():
+    if check_empty():
+        pass
+
     if create_path_state.get() == 1:
         if not os.path.isdir(local_path_var.get()):
             os.makedirs(local_path_var.get())
@@ -83,6 +129,7 @@ def write():
 
     if mount_all_state.get() == 1:
         os.system('sudo mount -a')
+
 
 
 addcifs_header_label = ttk.Label(root, text="Add Cifs GUI")
@@ -117,6 +164,9 @@ cifs_creds_entry = ttk.Entry(root, textvariable=cifs_creds_var)
 cifs_creds_entry.place(relx = 0.5, rely = 0.34, anchor = tkinter.CENTER)
 ToolTip(cifs_creds_entry, msg = "The path of your SMB Credentials file. (Ex: /home/user/.smbcredentials)")
 
+gen_cifs_creds_button = ttk.Button(root, text = "+", command = gen_base_smb_creds_file)
+gen_cifs_creds_button.place(relx = 0.8, rely = 0.34, anchor = tkinter.CENTER)
+ToolTip(gen_cifs_creds_button, msg = "Generate an .smbcredentials file at the path specified in the input.")   
 
 # Checkboxes
 create_path_checkbox = ttk.Checkbutton(root, text = "Create Path", variable=create_path_state)
