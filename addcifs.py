@@ -119,19 +119,33 @@ def save_creds():
 
 
 def write():
-    if check_empty():
-        pass
+    if check_empty(inputs):
+        print("One or more inputs are empty.")
+        return
+
+    script_content = f"""
+#!/bin/bash
+echo "Appending to /etc/fstab"
+echo "//{ip_var.get()}/{cifs_share_var.get()} {local_path_var.get()} cifs credentials={cifs_creds_var.get()},noserverino,uid=1000,gid=1000 0 0" | sudo tee -a /etc/fstab
+"""
 
     if create_path_state.get() == 1:
         if not os.path.isdir(local_path_var.get()):
             os.makedirs(local_path_var.get())
 
     if restart_systemd_daemon_state.get() == 1:
-        os.system('sudo systemctl --daemon-reload')
+        script_content += '\necho "Reloading daemon"\nsystemctl daemon-reload'
 
     if mount_all_state.get() == 1:
-        os.system('sudo mount -a')
+        script_content += '\necho "Mounting all in /etc/fstab"\nsudo mount -a'
 
+
+    script_path = "/tmp/write.sh"
+    with open(script_path, 'w') as script_file:
+        script_file.write(script_content)
+
+    os.chmod(script_path, 0o755)
+    os.system('sudo ' + script_path)
 
 
 addcifs_header_label = ttk.Label(root, text="Add Cifs GUI")
