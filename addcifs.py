@@ -148,6 +148,12 @@ echo "//{ip_var.get()}/{cifs_share_var.get()} {local_path_var.get()} cifs creden
     os.system('sudo ' + script_path)
 
 
+def select_all(event):
+    event.widget.select_range(0, 'end')
+    event.widget.icursor('end')
+    return 'break'
+
+
 addcifs_header_label = ttk.Label(root, text="Add Cifs GUI")
 addcifs_header_label.pack()
 
@@ -180,6 +186,10 @@ cifs_creds_entry = ttk.Entry(root, textvariable=cifs_creds_var)
 cifs_creds_entry.place(relx = 0.5, rely = 0.34, anchor = tkinter.CENTER)
 ToolTip(cifs_creds_entry, msg = "The path of your SMB Credentials file. (Ex: /home/user/.smbcredentials)")
 
+# Bind Ctrl+A to select all in each entry widget
+for entry in [ip_entry, cifs_share_entry, local_path_entry, cifs_creds_entry]:
+    entry.bind('<Control-a>', select_all)
+
 gen_cifs_creds_button = ttk.Button(root, text = "+", command = gen_base_smb_creds_file)
 gen_cifs_creds_button.place(relx = 0.8, rely = 0.34, anchor = tkinter.CENTER)
 ToolTip(gen_cifs_creds_button, msg = "Generate an .smbcredentials file at the path specified in the input.")   
@@ -191,9 +201,11 @@ ToolTip(create_path_checkbox, msg = "Create path on execution.")
 
 restart_systemd_daemon_checkbox = ttk.Checkbutton(root, text = "Restart Systmed Daemon", variable=restart_systemd_daemon_state)
 restart_systemd_daemon_checkbox.place(relx = 0.03, rely = 0.50, anchor = tkinter.W)
+ToolTip(restart_systemd_daemon_checkbox, msg = "Restart(reload) the systemd daemon.")
 
 mount_all_checkbox = ttk.Checkbutton(root, text = "Mount All", variable=mount_all_state)
 mount_all_checkbox.place(relx = 0.03, rely = 0.58, anchor = tkinter.W)
+ToolTip(mount_all_checkbox, msg = "Mount everything in /etc/fstab.")
 
 
 # Buttons
