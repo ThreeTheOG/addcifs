@@ -16,7 +16,8 @@ source ./venv/bin/activate
 pip install -r requirnments.txt
 deactivate
 ```
-Edit the shabang at the top of the file to reflect your VENV python interpreter. (Ex: #!/home/mt/Desktop/addcifs/venv/bin/python3)
+Edit the shabang at the top of the file to reflect your VENV python interpreter. (Ex: `#!/home/mt/Desktop/addcifs/venv/bin/python3`)
+
 Run `./addcifs.py`
 
 ## Note
