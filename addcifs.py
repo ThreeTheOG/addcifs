@@ -8,12 +8,7 @@ from tkinter import ttk, StringVar, IntVar
 from tktooltip import ToolTip
 import os
 import json
-# from os import geteuid
-
-# uid = geteuid()
-# if uid != 0:
-#     print('UID not 0, please run as root or with sudo.')
-#     exit()
+from subprocess import check_output, CalledProcessError
 
 defaults_file_name = '.addcifs_defaults.json'
 defaults_file_path = __file__[:-12] + defaults_file_name
@@ -105,6 +100,56 @@ def gen_base_smb_creds_file():
     creds_window.grab_set()
     root.wait_window(creds_window)
 
+def search_shares():
+    try:
+        output = check_output(f'smbclient -L {ip_var.get()} -A {cifs_creds_var.get()} -g', text = True, shell = True)
+    except CalledProcessError:
+            print('Please verify your IP is correct, your SMB Credentials file exists, smbclient is installed, and that your credentials are valid.')
+            return
+            
+    global search_window
+    search_window = tkinter.Toplevel(root)
+    search_window.geometry('200x320')
+    search_window.attributes('-type', 'dialog')
+
+    def get_selected_item(event):
+        for selected_item in listbox.selection():
+            global selected
+            item = listbox.item(selected_item)
+            selected = item['text']
+
+    shares = []
+    for i in output.split():
+        if i.startswith('Disk'):
+            shares.append(i.split('|')[1])
+
+
+    def select_button_logic():
+        cifs_share_var.set(selected)
+        search_window.destroy()
+
+
+    scrollbar = ttk.Scrollbar(search_window)
+    scrollbar.pack(side="right", fill="y")
+
+    listbox = ttk.Treeview(search_window, height = 9, yscrollcommand=scrollbar.set, show="tree")
+    listbox.place(relx = 0, rely = 0.02, width = 180)
+
+    listbox.bind("<<TreeviewSelect>>", get_selected_item)
+
+    select_button = ttk.Button(search_window, text = 'Select', command = select_button_logic)
+    select_button.place(relx = 0.5, rely = 0.90, anchor = tkinter.CENTER)
+
+    scrollbar.configure(command=listbox.yview)
+
+
+    for i in range(len(shares)):
+        listbox.insert("", "end", text = shares[i])
+
+    search_window.transient(root)
+    search_window.grab_set()
+    root.wait_window(search_window)
+
 def save_creds():
     creds_path = cifs_creds_var.get()
     if not os.path.exists(creds_path):
@@ -160,28 +205,28 @@ addcifs_header_label.pack()
 # Inputs
 ip_label = ttk.Label(root, text="IP:")
 ip_label.place(relx = 0.1, rely = 0.1, anchor = tkinter.CENTER)
-# ip_var.set("default_text")
 ip_entry = ttk.Entry(root, textvariable=ip_var)
 ip_entry.place(relx = 0.5, rely = 0.1, anchor = tkinter.CENTER)
 ToolTip(ip_entry, msg = "The IP of the CIFS server. (Ex: 10.0.0.111)")
 
 cifs_share_label = ttk.Label(root, text="Cifs Share:")
 cifs_share_label.place(relx = 0.13, rely = 0.18, anchor = tkinter.CENTER)
-# cifs_share_var.set("default_text")
 cifs_share_entry = ttk.Entry(root, textvariable=cifs_share_var)
 cifs_share_entry.place(relx = 0.5, rely = 0.18, anchor = tkinter.CENTER)
 ToolTip(cifs_share_entry, msg = "Cifs Share Path. (Ex: /my_share)")
 
+search_shares_button = ttk.Button(root, text = "?", command = search_shares)
+search_shares_button.place(relx = 0.8, rely = 0.18, anchor = tkinter.CENTER)
+ToolTip(search_shares_button, msg = "Search all non hidden Samba shares. (Requires IP/Creds, and smbclient to be installed)") 
+
 local_path_label = ttk.Label(root, text="Local Path:")
 local_path_label.place(relx = 0.13, rely = 0.26, anchor = tkinter.CENTER)
-# local_path_var.set("default_text")
 local_path_entry = ttk.Entry(root, textvariable=local_path_var)
 local_path_entry.place(relx = 0.5, rely = 0.26, anchor = tkinter.CENTER)
 ToolTip(local_path_entry, msg = "The local path of the share (Ex: /mnt/my_share)")
 
 cifs_creds_label = ttk.Label(root, text="Cifs Creds:")
 cifs_creds_label.place(relx = 0.13, rely = 0.34, anchor = tkinter.CENTER)
-# cifs_creds_var.set("default_text")
 cifs_creds_entry = ttk.Entry(root, textvariable=cifs_creds_var)
 cifs_creds_entry.place(relx = 0.5, rely = 0.34, anchor = tkinter.CENTER)
 ToolTip(cifs_creds_entry, msg = "The path of your SMB Credentials file. (Ex: /home/user/.smbcredentials)")
@@ -217,7 +262,16 @@ write_button = ttk.Button(root, text = "Write", command = write)
 write_button.place(relx = 0.5, rely = 0.90, anchor = tkinter.CENTER)
 ToolTip(write_button, msg = "Write to FSTAB.")
 
-
+def change_search_button_state(*args):
+    if ip_var.get() == "":
+        search_shares_button.configure(state="disabled")
+    elif cifs_creds_var.get() != "":
+        search_shares_button.configure(state="enabled")
+    else:
+        search_shares_button.configure(state="disabled")
+ip_var.trace_add('write', change_search_button_state)
+cifs_creds_var.trace_add('write', change_search_button_state)
+change_search_button_state()
 sv_ttk.set_theme("dark")
 
 root.mainloop()
