@@ -1,6 +1,6 @@
 # addcifs
 ## About
-Addcifs is a python tkinter project built to add CIFS shares to systems quickly. I have built/tested it on hyprland arch linux so I don't know compatibility with other systems.
+Addcifs is a python tkinter project built to add CIFS shares to systems quickly. I have built/tested it on hyprland arch linux so compatibility is untested.
 ## WARNING
 The SMB credentials file that it is built to work with stores credentials in plain text. Use at your own risk.
 ## Images
